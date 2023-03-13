@@ -1,0 +1,16 @@
+[package]
+name = "zkp-mooc-halo2"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+    "blake2f-circuit",
+    "ripemd160-circuit",
+    "sha2-256-circuit",
+]
+
+[dependencies]
+blake2f-circuit = { version = "^0.1.0", path = "./blake2f-circuit" }
+ripemd160-circuit = { version = "^0.1.0", path = "./ripemd160-circuit" }
+sha2-256-circuit = { version = "^0.1.0", path = "./sha2-256-circuit" }
