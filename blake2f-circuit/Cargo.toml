@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 ethers-core = "^1.0.0"
 halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2023_02_02" }
+lazy_static = "1.4.0"
 
 [features]
 default = ["test"]
