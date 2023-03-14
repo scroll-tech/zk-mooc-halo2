@@ -79,22 +79,44 @@ impl<F: FieldExt> Ripemd160Chip<F> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use std::str::FromStr;
-
+#[cfg(any(feature = "test", test))]
+pub mod dev {
     use super::*;
 
     use ethers_core::types::H256;
-    use halo2_proofs::{
-        circuit::SimpleFloorPlanner, dev::MockProver, halo2curves::bn256::Fr, plonk::Circuit,
-    };
+    use halo2_proofs::{circuit::SimpleFloorPlanner, plonk::Circuit};
+    use std::str::FromStr;
+
+    lazy_static::lazy_static! {
+        pub static ref INPUTS_OUTPUTS: (Vec<Vec<u8>>, Vec<H256>) = {
+            [
+                ("", "9c1185a5c5e9fc54612808977ee8f548b2258d31"),
+                ("abc", "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc"),
+                (
+                    "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+                    "12a053384a9c0c88e405a06c27dcf49ada62eb2b",
+                ),
+                (
+                    "abcdefghijklmnopqrstuvwxyz",
+                    "f71c27109c692c1b56bbdceb5b9d2865b3708dbc",
+                ),
+            ]
+            .iter()
+            .map(|(input, output)| {
+                (
+                    input.as_bytes().to_vec(),
+                    H256::from_str(output).expect("SHA-256 hash is 32-bytes"),
+                )
+            })
+            .unzip()
+        };
+    }
 
     #[derive(Default)]
-    struct Ripemd160TestCircuit<F> {
-        inputs: Vec<Vec<u8>>,
-        outputs: Vec<H256>,
-        _marker: PhantomData<F>,
+    pub struct Ripemd160TestCircuit<F> {
+        pub inputs: Vec<Vec<u8>>,
+        pub outputs: Vec<H256>,
+        pub _marker: PhantomData<F>,
     }
 
     impl<F: FieldExt> Circuit<F> for Ripemd160TestCircuit<F> {
@@ -119,29 +141,18 @@ mod tests {
             chip.load(&mut layouter)
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use halo2_proofs::{dev::MockProver, halo2curves::bn256::Fr};
+    use std::marker::PhantomData;
+
+    use crate::dev::{Ripemd160TestCircuit, INPUTS_OUTPUTS};
 
     #[test]
     fn test_ripemd160_circuit() {
-        let (inputs, outputs): (Vec<Vec<u8>>, Vec<H256>) = [
-            ("", "9c1185a5c5e9fc54612808977ee8f548b2258d31"),
-            ("abc", "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc"),
-            (
-                "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-                "12a053384a9c0c88e405a06c27dcf49ada62eb2b",
-            ),
-            (
-                "abcdefghijklmnopqrstuvwxyz",
-                "f71c27109c692c1b56bbdceb5b9d2865b3708dbc",
-            ),
-        ]
-        .iter()
-        .map(|(input, output)| {
-            (
-                input.as_bytes().to_vec(),
-                H256::from_str(output).expect("SHA-256 hash is 32-bytes"),
-            )
-        })
-        .unzip();
+        let (inputs, outputs) = INPUTS_OUTPUTS.clone();
 
         let circuit: Ripemd160TestCircuit<Fr> = Ripemd160TestCircuit {
             inputs,

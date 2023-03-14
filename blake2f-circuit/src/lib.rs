@@ -79,5 +79,8 @@ impl<F: FieldExt> Blake2fChip<F> {
     }
 }
 
+#[cfg(any(feature = "test", test))]
+pub mod dev {}
+
 #[cfg(test)]
 mod tests {}

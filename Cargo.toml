@@ -5,6 +5,7 @@ edition = "2021"
 
 [workspace]
 members = [
+    "benchmarking",
     "blake2f-circuit",
     "ripemd160-circuit",
     "sha2-256-circuit",

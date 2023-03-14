@@ -1,0 +1,17 @@
+[package]
+name = "benchmarking"
+version = "0.1.0"
+edition = "2021"
+
+[dev-dependencies]
+ark-std = { version = "0.3", features = ["print-trace"] }
+ethers-core = "^1.0.0"
+halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2023_02_02" }
+rand = "0.8"
+rand_chacha = "0.3"
+rand_xorshift = "0.3"
+
+# circuits
+blake2f-circuit = { version = "^0.1.0", path = "../blake2f-circuit", features = [ "test" ] }
+ripemd160-circuit = { version = "^0.1.0", path = "../ripemd160-circuit", features = [ "test" ] }
+sha2-256-circuit = { version = "^0.1.0", path = "../sha2-256-circuit", features = [ "test" ] }

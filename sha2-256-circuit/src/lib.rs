@@ -79,50 +79,17 @@ impl<F: FieldExt> Sha2Chip<F> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use std::str::FromStr;
-
+#[cfg(any(feature = "test", test))]
+pub mod dev {
     use super::*;
 
     use ethers_core::types::H256;
-    use halo2_proofs::{
-        circuit::SimpleFloorPlanner, dev::MockProver, halo2curves::bn256::Fr, plonk::Circuit,
-    };
+    use halo2_proofs::{circuit::SimpleFloorPlanner, plonk::Circuit};
+    use std::str::FromStr;
 
-    #[derive(Default)]
-    struct Sha2TestCircuit<F> {
-        inputs: Vec<Vec<u8>>,
-        outputs: Vec<H256>,
-        _marker: PhantomData<F>,
-    }
-
-    impl<F: FieldExt> Circuit<F> for Sha2TestCircuit<F> {
-        type Config = Sha2Config<F>;
-        type FloorPlanner = SimpleFloorPlanner;
-
-        fn without_witnesses(&self) -> Self {
-            Self::default()
-        }
-
-        fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
-            let sha2_table = Sha2Table::construct(meta);
-            Sha2Config::configure(meta, sha2_table)
-        }
-
-        fn synthesize(
-            &self,
-            config: Self::Config,
-            mut layouter: impl Layouter<F>,
-        ) -> Result<(), Error> {
-            let chip = Sha2Chip::construct(config);
-            chip.load(&mut layouter)
-        }
-    }
-
-    #[test]
-    fn test_sha2_circuit() {
-        let (inputs, outputs): (Vec<Vec<u8>>, Vec<H256>) = [
+    lazy_static::lazy_static! {
+        pub static ref INPUTS_OUTPUTS: (Vec<Vec<u8>>, Vec<H256>) = {
+        [
             (
                 "",
                 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -147,7 +114,51 @@ mod tests {
                     H256::from_str(output).expect("SHA-256 hash is 32-bytes"),
                 )
             })
-            .unzip();
+            .unzip()
+        };
+    }
+
+    #[derive(Default)]
+    pub struct Sha2TestCircuit<F> {
+        pub inputs: Vec<Vec<u8>>,
+        pub outputs: Vec<H256>,
+        pub _marker: PhantomData<F>,
+    }
+
+    impl<F: FieldExt> Circuit<F> for Sha2TestCircuit<F> {
+        type Config = Sha2Config<F>;
+        type FloorPlanner = SimpleFloorPlanner;
+
+        fn without_witnesses(&self) -> Self {
+            Self::default()
+        }
+
+        fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
+            let sha2_table = Sha2Table::construct(meta);
+            Sha2Config::configure(meta, sha2_table)
+        }
+
+        fn synthesize(
+            &self,
+            config: Self::Config,
+            mut layouter: impl Layouter<F>,
+        ) -> Result<(), Error> {
+            let chip = Sha2Chip::construct(config);
+            chip.load(&mut layouter)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use halo2_proofs::{dev::MockProver, halo2curves::bn256::Fr};
+    use std::marker::PhantomData;
+
+    use crate::dev::{Sha2TestCircuit, INPUTS_OUTPUTS};
+
+    #[test]
+    fn test_sha2_circuit() {
+        let (inputs, outputs) = INPUTS_OUTPUTS.clone();
 
         let circuit: Sha2TestCircuit<Fr> = Sha2TestCircuit {
             inputs,
