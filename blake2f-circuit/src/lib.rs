@@ -46,14 +46,24 @@ impl<F: FieldExt> Blake2fConfig<F> {
     }
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct Blake2fWitness {
+    pub rounds: u32,
+    pub h: [u64; 8],
+    pub m: [u64; 16],
+    pub t: [u64; 2],
+    pub f: bool,
+}
+
 #[derive(Clone, Debug)]
 pub struct Blake2fChip<F> {
     config: Blake2fConfig<F>,
+    data: Vec<Blake2fWitness>,
 }
 
 impl<F: FieldExt> Blake2fChip<F> {
-    pub fn construct(config: Blake2fConfig<F>) -> Self {
-        Self { config }
+    pub fn construct(config: Blake2fConfig<F>, data: Vec<Blake2fWitness>) -> Self {
+        Self { config, data }
     }
 
     pub fn load(&self, layouter: &mut impl Layouter<F>) -> Result<(), Error> {
@@ -71,7 +81,7 @@ pub mod dev {
 
     lazy_static::lazy_static! {
         // https://eips.ethereum.org/EIPS/eip-152#example-usage-in-solidity
-        pub static ref INPUTS_OUTPUTS: (Vec<Blake2fTestCircuitArgs>, Vec<H512>) = {
+        pub static ref INPUTS_OUTPUTS: (Vec<Blake2fWitness>, Vec<H512>) = {
             let (h1, h2) = (
                 <[u8; 32]>::from_hex("48c9bdf267e6096a3ba7ca8485ae67bb2bf894fe72f36e3cf1361d5f3af54fa5").expect(""),
                 <[u8; 32]>::from_hex("d182e6ad7f520e511f6c3e2b8c68059b6bbd41fbabd9831f79217e1319cde05b").expect(""),
@@ -84,7 +94,7 @@ pub mod dev {
             );
             (
                 vec![
-                    Blake2fTestCircuitArgs {
+                    Blake2fWitness {
                         rounds: 12,
                         h: [
                             u64::from_le_bytes(h1[0x00..0x08].try_into().expect("")),
@@ -126,18 +136,9 @@ pub mod dev {
         };
     }
 
-    #[derive(Clone, Default)]
-    pub struct Blake2fTestCircuitArgs {
-        pub rounds: u32,
-        pub h: [u64; 8],
-        pub m: [u64; 16],
-        pub t: [u64; 2],
-        pub f: bool,
-    }
-
     #[derive(Default)]
     pub struct Blake2fTestCircuit<F> {
-        pub inputs: Vec<Blake2fTestCircuitArgs>,
+        pub inputs: Vec<Blake2fWitness>,
         pub outputs: Vec<H512>,
         pub _marker: PhantomData<F>,
     }
@@ -160,7 +161,7 @@ pub mod dev {
             config: Self::Config,
             mut layouter: impl Layouter<F>,
         ) -> Result<(), Error> {
-            let chip = Blake2fChip::construct(config);
+            let chip = Blake2fChip::construct(config, self.inputs.clone());
             chip.load(&mut layouter)
         }
     }

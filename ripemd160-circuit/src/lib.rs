@@ -47,13 +47,20 @@ impl<F: FieldExt> Ripemd160Config<F> {
 }
 
 #[derive(Clone, Debug)]
+pub struct Ripemd160Witness<F> {
+    pub inputs: Vec<Vec<u8>>,
+    pub _marker: PhantomData<F>,
+}
+
+#[derive(Clone, Debug)]
 pub struct Ripemd160Chip<F> {
     config: Ripemd160Config<F>,
+    data: Ripemd160Witness<F>,
 }
 
 impl<F: FieldExt> Ripemd160Chip<F> {
-    pub fn construct(config: Ripemd160Config<F>) -> Self {
-        Self { config }
+    pub fn construct(config: Ripemd160Config<F>, data: Ripemd160Witness<F>) -> Self {
+        Self { config, data }
     }
 
     pub fn load(&self, layouter: &mut impl Layouter<F>) -> Result<(), Error> {
@@ -119,7 +126,13 @@ pub mod dev {
             config: Self::Config,
             mut layouter: impl Layouter<F>,
         ) -> Result<(), Error> {
-            let chip = Ripemd160Chip::construct(config);
+            let chip = Ripemd160Chip::construct(
+                config,
+                Ripemd160Witness {
+                    inputs: self.inputs.clone(),
+                    _marker: PhantomData,
+                },
+            );
             chip.load(&mut layouter)
         }
     }

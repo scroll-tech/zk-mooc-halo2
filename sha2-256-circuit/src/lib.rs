@@ -107,13 +107,20 @@ impl<F: FieldExt> Sha2Config<F> {
 }
 
 #[derive(Clone, Debug)]
+pub struct Sha2Witness<F> {
+    pub inputs: Vec<Vec<u8>>,
+    pub _marker: PhantomData<F>,
+}
+
+#[derive(Clone, Debug)]
 pub struct Sha2Chip<F> {
     config: Sha2Config<F>,
+    data: Sha2Witness<F>,
 }
 
 impl<F: FieldExt> Sha2Chip<F> {
-    pub fn construct(config: Sha2Config<F>) -> Self {
-        Self { config }
+    pub fn construct(config: Sha2Config<F>, data: Sha2Witness<F>) -> Self {
+        Self { data, config }
     }
 
     pub fn load(&self, layouter: &mut impl Layouter<F>) -> Result<(), Error> {
@@ -185,7 +192,13 @@ pub mod dev {
             config: Self::Config,
             mut layouter: impl Layouter<F>,
         ) -> Result<(), Error> {
-            let chip = Sha2Chip::construct(config);
+            let chip = Sha2Chip::construct(
+                config,
+                Sha2Witness {
+                    inputs: self.inputs.clone(),
+                    _marker: PhantomData,
+                },
+            );
             chip.load(&mut layouter)
         }
     }
