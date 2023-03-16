@@ -2,6 +2,66 @@
 #![allow(unused_variables)]
 #![allow(unreachable_code)]
 
+//! A circuit is a layout of columns over multiple rows, capable of building or
+//! defining their own custom constraints. In the [`zkEVM`] architecture, many
+//! such circuits (individually termed as sub-circuits) are placed within a
+//! super-circuit. When a circuit encounters an expensive operation, it can
+//! outsource the verification effort to another circuit through the usage of
+//! lookup arguments.
+//!
+//! For instance, the [`EVM-circuit`] would like to verify the output of a call
+//! to the precompiled contract [`SHA2-256`], which in itself is an expensive
+//! operation to verify. So in order to separate out the verification logic and
+//! build a more developer-friendly approach, the EVM circuit would use the
+//! SHA2-256 circuit's table via lookups to communicate simply the input-output
+//! relationship, outsourcing the effort of verifying the relationship itself
+//! to the SHA2-256 circuit.
+//!
+//! In the sha2-256-circuit crate, we export the SHA2-256 circuit's config `Sha2Config`,
+//! and the table within it (that other circuits can use as a lookup argument)
+//! `Sha2Table`. The config type defines the layout of the circuit, the various
+//! named columns in the circuit's layout, and the `configure` method is meant
+//! to define the relationship between those columns over its neighbouring rows.
+//!
+//! For instance, for the `id` field to be an incremental field, one may specify
+//! the following relationship:
+//! ```
+//! # impl<F: FieldExt> Sha2Config<F> {
+//!     pub fn configure(meta: &mut ConstraintSystem<F>, table: Sha2Table) -> Self {
+//!         meta.create_gate("validity check over all rows", |meta| {
+//!             let mut cb = BaseConstraintBuilder::default();
+//!             cb.require_equal(
+//!                 "id field is incremental, i.e. id::cur + 1 == id::next",
+//!                 meta.query_advice(table.id, Rotation::cur()) + 1.expr(),
+//!                 meta.query_advice(table.id, Rotation::next()),
+//!             );
+//!             cb.gate(1.expr()) // enable this gate over all rows.
+//!         });
+//!
+//!         Self {
+//!             table,
+//!             _marker: PhantomData,
+//!         }
+//!     }
+//! # }
+//! ```
+//!
+//! We also describe how the EVM circuit would lookup to the SHA2 circuit via lookup
+//! arguments [`here`]. Currently, the table is a dummy column named `id`.
+//!
+//! The following tasks are expected to be done:
+//! - Define the layout of the SHA2-256 circuit through columns in `Sha2Config`.
+//! - Define the lookup argument exposed by SHA2-256 circuit via `Sha2Table`.
+//! - Define verification logic over rows of the circuit by constraining the relationship
+//!   between the columns.
+//! - Assign witness data to the circuit via the `load` method.
+//! - Test the verification logic in the circuit.
+//!
+//! [`zkEVM`]: https://privacy-scaling-explorations.github.io/zkevm-docs/introduction.html
+//! [`EVM-circuit`]: https://github.com/scroll-tech/zkevm-circuits/blob/scroll-stable/zkevm-circuits/src/evm_circuit.rs
+//! [`SHA2-256`]: https://en.wikipedia.org/wiki/SHA-2#Pseudocode
+//! [`here`]: https://github.com/scroll-tech/zkevm-circuits/pull/398
+
 use std::marker::PhantomData;
 
 use halo2_proofs::{
@@ -12,9 +72,6 @@ use halo2_proofs::{
 
 #[derive(Clone, Debug)]
 pub struct Sha2Table {
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////
     id: Column<Advice>,
 }
 
@@ -36,19 +93,12 @@ impl Sha2Table {
 
 #[derive(Clone, Debug)]
 pub struct Sha2Config<F> {
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    ///////////////////////////////////////////////////////////////////////////
     table: Sha2Table,
     _marker: PhantomData<F>,
 }
 
 impl<F: FieldExt> Sha2Config<F> {
     pub fn configure(meta: &mut ConstraintSystem<F>, table: Sha2Table) -> Self {
-        ///////////////////////////////////////////////////////////////////////
-        //
-        ///////////////////////////////////////////////////////////////////////
-
         Self {
             table,
             _marker: PhantomData,
@@ -63,18 +113,10 @@ pub struct Sha2Chip<F> {
 
 impl<F: FieldExt> Sha2Chip<F> {
     pub fn construct(config: Sha2Config<F>) -> Self {
-        ///////////////////////////////////////////////////////////////////////
-        //
-        ///////////////////////////////////////////////////////////////////////
-
         Self { config }
     }
 
     pub fn load(&self, layouter: &mut impl Layouter<F>) -> Result<(), Error> {
-        ///////////////////////////////////////////////////////////////////////
-        //
-        ///////////////////////////////////////////////////////////////////////
-
         Ok(())
     }
 }
