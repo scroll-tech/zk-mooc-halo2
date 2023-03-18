@@ -9,3 +9,8 @@ functions are [precompiled contracts](https://www.evm.codes/precompiled) in the 
 zkEVM architecture relies on these circuits and their tables to check the input-output relationship via lookup arguments.
 
 The repository also contains a `benchmarking` crate to benchmark and further optimise the layout of each of the circuits.
+To run the benchmarks and see the output run the following commands:
+```
+cd benchmarking
+DEGREE=10 cargo test -- --nocapture
+```
