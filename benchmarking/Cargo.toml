@@ -6,7 +6,7 @@ edition = "2021"
 [dev-dependencies]
 ark-std = { version = "0.3", features = ["print-trace"] }
 ethers-core = "^1.0.0"
-halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2023_02_02" }
+halo2_proofs = { git = "https://github.com/halo2-ce/halo2.git" }
 rand = "0.8"
 rand_chacha = "0.3"
 rand_xorshift = "0.3"
