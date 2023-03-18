@@ -65,12 +65,12 @@ impl<F: FieldExt> Ripemd160Chip<F> {
 pub mod dev {
     use super::*;
 
-    use ethers_core::types::H256;
+    use ethers_core::types::H160;
     use halo2_proofs::{circuit::SimpleFloorPlanner, plonk::Circuit};
     use std::str::FromStr;
 
     lazy_static::lazy_static! {
-        pub static ref INPUTS_OUTPUTS: (Vec<Vec<u8>>, Vec<H256>) = {
+        pub static ref INPUTS_OUTPUTS: (Vec<Vec<u8>>, Vec<H160>) = {
             [
                 ("", "9c1185a5c5e9fc54612808977ee8f548b2258d31"),
                 ("abc", "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc"),
@@ -87,7 +87,7 @@ pub mod dev {
             .map(|(input, output)| {
                 (
                     input.as_bytes().to_vec(),
-                    H256::from_str(output).expect("SHA-256 hash is 32-bytes"),
+                    H160::from_str(output).expect("ripemd-160 hash is 20-bytes"),
                 )
             })
             .unzip()
@@ -97,7 +97,7 @@ pub mod dev {
     #[derive(Default)]
     pub struct Ripemd160TestCircuit<F> {
         pub inputs: Vec<Vec<u8>>,
-        pub outputs: Vec<H256>,
+        pub outputs: Vec<H160>,
         pub _marker: PhantomData<F>,
     }
 
