@@ -1,5 +1,6 @@
 use halo2_proofs::{
-    arithmetic::FieldExt,
+    halo2curves::bn256::Fr,
+    arithmetic::{FieldExt, Field},
     circuit::{Layouter, Region, Value},
     plonk::{Advice, Column, ConstraintSystem, Error, Expression, Fixed, Selector},
     poly::Rotation,
@@ -7,20 +8,26 @@ use halo2_proofs::{
 
 #[derive(Clone, Copy)]
 pub struct ResiduePatternConfig {
-    always_enabled: Selector,
-    index_is_nonzero: Selector,
-    index: Column<Fixed>,
+    always_enabled: Selector, // This selector is always enabled to avoid ConstraintPoisoned errors.
+    index_is_nonzero: Selector, // enabled iff index column is not zero.
+    index: Column<Fixed>,     // repeats [0..length)
 
-    value: Column<Advice>,
-    is_residue: Column<Advice>,
-    pattern: Column<Advice>,
-    square_root: Column<Advice>,
+    value: Column<Advice>,       // value we're computing residue pattern for
+    is_residue: Column<Advice>,  // binary column that is 1 iff value + index is a quadratic residue
+    pattern: Column<Advice>,     // built up bit by bit from is_residue
+    square_root: Column<Advice>, // square root of value + index if its a residue or nonresidue * (value + index) otherwise.
 }
 
 pub struct ResiduePatternChip<F> {
     length: usize,
     nonresidue: F,
     config: ResiduePatternConfig,
+}
+
+pub fn residue_pattern(x: Fr) -> u64 {
+    (0u64..64)
+        .map(|i| Option::<Fr>::from((x + Fr::from(i)).sqrt()).is_some())
+        .fold(0, |pattern, is_residue| 2 * pattern + u64::from(is_residue))
 }
 
 impl ResiduePatternConfig {
@@ -54,16 +61,20 @@ impl ResiduePatternConfig {
         });
 
         meta.create_gate(
-            "square_root^2 = nonresidue * (value + index) if not is_residue ",
+            "square_root^2 = nonresidue * (value + index) if not is_residue",
             |meta| {
                 let always_enabled = meta.query_selector(always_enabled);
                 let is_nonresidue =
                     Expression::Constant(F::one()) - meta.query_advice(is_residue, Rotation::cur());
-                let nonresidue = Expression::Constant(nonresidue);
+                let fixed_nonresidue = Expression::Constant(nonresidue);
                 let square_root = meta.query_advice(square_root, Rotation::cur());
-                let square = meta.query_advice(value, Rotation::cur())
+                let nonresidue = meta.query_advice(value, Rotation::cur())
                     + meta.query_fixed(index, Rotation::cur());
-                vec![always_enabled * is_nonresidue * (square_root.square() - nonresidue * square)]
+                vec![
+                    always_enabled
+                        * is_nonresidue
+                        * (square_root.square() - fixed_nonresidue * nonresidue),
+                ]
             },
         );
 
@@ -173,7 +184,7 @@ impl<F: FieldExt> ResiduePatternChip<F> {
 mod tests {
     use super::*;
     use halo2_proofs::{
-        arithmetic::Field, circuit::SimpleFloorPlanner, dev::MockProver, halo2curves::bn256::Fr,
+        arithmetic::Field, circuit::SimpleFloorPlanner, dev::MockProver,
         plonk::Circuit,
     };
 
@@ -186,7 +197,7 @@ mod tests {
 
     impl<F: FieldExt> TestCircuit<F> {
         fn nonresidue() -> F {
-            F::from(11)
+            F::from(5)
         }
     }
 
@@ -199,7 +210,6 @@ mod tests {
         }
 
         fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
-            let nonresidue = Self::nonresidue();
             ResiduePatternConfig::configure(meta, Self::nonresidue())
         }
 
@@ -216,6 +226,22 @@ mod tests {
             chip.assign(&mut layouter, &self.values)?;
             Ok(())
         }
+    }
+
+    #[test]
+    fn test_vectors() {
+        assert_eq!(
+            residue_pattern(Fr::zero()),
+            0b1111101011001100101000001111010010011101000100001110111100110000
+        );
+        assert_eq!(
+            residue_pattern(Fr::one()),
+            0b1111010110011001010000011110100100111010001000011101111001100001
+        );
+        assert_eq!(
+            residue_pattern(Fr::from(0x5234234)),
+            0b110011011100010010000111110001011101000000000010111000101011110
+        );
     }
 
     #[test]
