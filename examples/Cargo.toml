@@ -1,0 +1,13 @@
+[package]
+name = "examples"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethers-core = "^1.0.0"
+halo2_proofs = { git = "https://github.com/halo2-ce/halo2.git" }
+lazy_static = "1.4.0"
+
+[features]
+default = ["test"]
+test = []

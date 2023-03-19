@@ -9,9 +9,11 @@ members = [
     "blake2f-circuit",
     "ripemd160-circuit",
     "sha2-256-circuit",
+    "examples",
 ]
 
 [dependencies]
 blake2f-circuit = { version = "^0.1.0", path = "./blake2f-circuit" }
 ripemd160-circuit = { version = "^0.1.0", path = "./ripemd160-circuit" }
 sha2-256-circuit = { version = "^0.1.0", path = "./sha2-256-circuit" }
+examples = { version = "^0.1.0", path = "./examples" }
