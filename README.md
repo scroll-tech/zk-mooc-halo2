@@ -12,7 +12,7 @@ The repository also contains a `benchmarking` crate to benchmark and further opt
 To run the benchmarks and see the output run the following commands:
 ```
 cd benchmarking
-DEGREE=10 cargo test -- --nocapture
+DEGREE=17 cargo test -- --nocapture
 ```
 
 ## Workshop Video & Additional Resources
