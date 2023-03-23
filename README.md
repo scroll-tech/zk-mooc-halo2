@@ -18,7 +18,7 @@ DEGREE=17 cargo test -- --nocapture
 ## Workshop Video & Additional Resources
 
 - [Workshop Recording](https://www.youtube.com/watch?v=60lkR8DZKUA)
-- [Workshop Slides](https://docs.google.com/presentation/d/15om-tAK7VvWKx050p01xuOBJ4O3SVF-WfgGf12gtXwE/edit?usp=share_link) ([PDF](https://drive.google.com/file/d/1nNzD0JbB8RrxHmm7hxHhFXPeYvYXQjIq/view?usp=share_link))
+- [Workshop Slides](https://drive.google.com/file/d/1SfY_kBWs2S-23gw6hKvpKwHHjqQn_Ak8/view?usp=sharing)
 - [ZKP / Web3 Hackathon](https://zk-hacking.org/) hosted by Berkeley [RDI](https://rdi.berkeley.edu/) and in partnership with [ZKP MOOC](https://zk-learning.org/)
 - [ZK Circuit Track](https://zk-hacking.org/tracks/zk_circuit_track/) (Category 4 sponsored by Scroll)
 - [Installing Rust](https://doc.rust-lang.org/book/ch01-01-installation.html)
